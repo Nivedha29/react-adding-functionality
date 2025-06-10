@@ -1,82 +1,86 @@
-import React, { useState } from "react";
-import './App.css'
+import React, { useState } from 'react';
+import './App.css';
 
-const initialTasks = [ /* Paste your JSON task data here */ ];
+export default function TaskManager() {
+  const [tasks, setTasks] = useState([]);
+  const [filter, setFilter] = useState('All');
+  const [newTitle, setNewTitle] = useState('');
 
-export default function App() {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [filter, setFilter] = useState("All");
-  const [newTask, setNewTask] = useState("");
+  const handleAddTask = () => {
+    if (!newTitle.trim()) return;
+    const newTask = {
+      userId: 1,
+      id: Date.now(),
+      title: newTitle,
+      completed: false,
+    };
+    setTasks([newTask, ...tasks]);
+    setNewTitle('');
+  };
 
-  const filteredTasks = tasks.filter((task) => {
-    if (filter === "Active") return !task.completed;
-    if (filter === "Completed") return task.completed;
+  const handleToggleComplete = (id) => {
+    setTasks(tasks.map(task =>
+      task.id === id ? { ...task, completed: !task.completed } : task
+    ));
+  };
+
+  const handleClearCompleted = () => {
+    setTasks(tasks.filter(task => !task.completed));
+  };
+
+  const filteredTasks = tasks.filter(task => {
+    if (filter === 'Active') return !task.completed;
+    if (filter === 'Completed') return task.completed;
     return true;
   });
 
-  const addTask = () => {
-    if (newTask.trim() === "") return;
-    const newId = tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
-    const task = {
-      userId: 1,
-      id: newId,
-      title: newTask,
-      completed: false,
-    };
-    setTasks([...tasks, task]);
-    setNewTask("");
-  };
-
-  const toggleTask = (id) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-
-  const clearCompleted = () => {
-    setTasks(tasks.filter((task) => !task.completed));
-  };
-
-  const unfinishedCount = tasks.filter((task) => !task.completed).length;
+  const remainingCount = tasks.filter(task => !task.completed).length;
 
   return (
-    <div style={{ padding: 20, maxWidth: 600, margin: "auto" }}>
-      <h2>Todo List</h2>
+    <div className="task-manager">
+      <h1>Task Manager</h1>
 
-      <input
-        type="text"
-        value={newTask}
-        onChange={(e) => setNewTask(e.target.value)}
-        placeholder="Add new task"
-        onKeyDown={(e) => e.key === "Enter" && addTask()}
-      />
-      <button onClick={addTask}>Add</button>
-
-      <div style={{ margin: "20px 0" }}>
-        <button onClick={() => setFilter("All")}>All</button>
-        <button onClick={() => setFilter("Active")}>Active</button>
-        <button onClick={() => setFilter("Completed")}>Completed</button>
+      <div className="input-row">
+        <input
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          placeholder="Add new task"
+        />
+        <button onClick={handleAddTask}>Add</button>
       </div>
 
-      <ul>
-        {filteredTasks.map((task) => (
-          <li key={task.id}>
+      <div className="filter-buttons">
+        {['All', 'Active', 'Completed'].map(tab => (
+          <button
+            key={tab}
+            className={filter === tab ? 'active' : ''}
+            onClick={() => setFilter(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <ul className="task-list">
+        {filteredTasks.map(task => (
+          <li key={task.id} className="task-item">
             <input
               type="checkbox"
               checked={task.completed}
-              onChange={() => toggleTask(task.id)}
+              onChange={() => handleToggleComplete(task.id)}
             />
-            {task.title}
+            <span className={task.completed ? 'completed' : ''}>{task.title}</span>
           </li>
         ))}
       </ul>
 
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <span>{unfinishedCount} task(s) left</span>
-        <button onClick={clearCompleted}>Clear completed</button>
+      <div className="footer">
+        <span>{remainingCount} tasks left</span>
+        <button className="clear" onClick={handleClearCompleted}>
+          Clear completed
+        </button>
       </div>
     </div>
   );
 }
+
