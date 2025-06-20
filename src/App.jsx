@@ -1,86 +1,66 @@
 import React, { useState } from 'react';
+import TaskList from './TaskList';
+import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 
-export default function TaskManager() {
+export default function TodoApp() {
   const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState('');
   const [filter, setFilter] = useState('All');
-  const [newTitle, setNewTitle] = useState('');
 
-  const handleAddTask = () => {
-    if (!newTitle.trim()) return;
-    const newTask = {
-      userId: 1,
-      id: Date.now(),
-      title: newTitle,
+  const addTask = () => {
+    if (!newTask.trim()) return;
+    const newEntry = {
+      id: uuidv4(),
+      title: newTask.trim(),
       completed: false,
+      createdAt: new Date(),
     };
-    setTasks([newTask, ...tasks]);
-    setNewTitle('');
+    setTasks([...tasks, newEntry]);
+    setNewTask('');
   };
 
-  const handleToggleComplete = (id) => {
-    setTasks(tasks.map(task =>
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+  const toggleTask = (id) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   };
 
-  const handleClearCompleted = () => {
-    setTasks(tasks.filter(task => !task.completed));
+  const clearCompleted = () => {
+    setTasks(tasks.filter(t => !t.completed));
   };
 
-  const filteredTasks = tasks.filter(task => {
-    if (filter === 'Active') return !task.completed;
-    if (filter === 'Completed') return task.completed;
-    return true;
-  });
+  const filteredTasks = tasks.filter(task =>
+    filter === 'Active' ? !task.completed :
+    filter === 'Completed' ? task.completed : true
+  );
 
-  const remainingCount = tasks.filter(task => !task.completed).length;
+  const activeCount = tasks.filter(t => !t.completed).length;
 
   return (
-    <div className="task-manager">
-      <h1>Task Manager</h1>
-
-      <div className="input-row">
+    <div className="todo-container">
+      <h1>Todo List</h1>
+      <div className="input-section">
         <input
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          placeholder="Add new task"
+          type="text"
+          placeholder="Add a task..."
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addTask()}
         />
-        <button onClick={handleAddTask}>Add</button>
+        <button onClick={addTask}>Add</button>
       </div>
 
-      <div className="filter-buttons">
+      <div className="filter-section">
         {['All', 'Active', 'Completed'].map(tab => (
-          <button
-            key={tab}
-            className={filter === tab ? 'active' : ''}
-            onClick={() => setFilter(tab)}
-          >
-            {tab}
-          </button>
+          <button key={tab} onClick={() => setFilter(tab)}>{tab}</button>
         ))}
       </div>
 
-      <ul className="task-list">
-        {filteredTasks.map(task => (
-          <li key={task.id} className="task-item">
-            <input
-              type="checkbox"
-              checked={task.completed}
-              onChange={() => handleToggleComplete(task.id)}
-            />
-            <span className={task.completed ? 'completed' : ''}>{task.title}</span>
-          </li>
-        ))}
-      </ul>
+      <TaskList tasks={filteredTasks} onToggle={toggleTask} />
 
       <div className="footer">
-        <span>{remainingCount} tasks left</span>
-        <button className="clear" onClick={handleClearCompleted}>
-          Clear completed
-        </button>
+        <span>{activeCount} task{activeCount !== 1 ? 's' : ''} left</span>
+        <button onClick={clearCompleted}>Clear completed</button>
       </div>
     </div>
   );
 }
-
